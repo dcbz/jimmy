@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="logo.png" width="220" alt="jimmy — a smiling wedge jimmying open a padlock, a capability graph glowing behind it">
+</p>
+
 # jimmy
 
 *noun, slang: a wedge; v., to jimmy — open a lock the hard way, without
