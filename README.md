@@ -1,11 +1,7 @@
 # jimmy
 
 *noun, slang: a wedge; v., to jimmy — open a lock the hard way, without
-picking it.* Formerly `ssbreak`, renamed because the old name advertised the
-wrong verb: nothing in this methodology **breaks**. Every escape here is a
-legitimate function compelled into composition. (`git`-less history keeps
-the old `runs/` directories as they were; new labs use `_jimmy/` sentinels
-and `JIMMY_TOKEN`.)
+picking it.*
 
 An AI research harness for the methodology of *"He Compels Secure Shells"*
 (DangerMouse, Phrack 69): breaking out of restricted execution environments
@@ -17,6 +13,13 @@ The harness is neuro-symbolic: an LLM proposes experiments about application
 behavior, a deterministic capability graph tracks what has actually been
 **demonstrated**, and a host-side verifier — independent of the model's
 reading of the screen — decides whether a boundary was crossed.
+
+![A live jimmy run against the demo lab](jimmy.png)
+
+*Watching a run (`jimmy run --target demo --watch`): the hypothesis
+timeline with host-side verdicts (✓ verified / ✗ disproven) and the
+capability closure at left, the session screen reconstructed from the raw
+byte stream at right.*
 
 ```
 LLM Research Agent  ── hypotheses · experiment JSON
