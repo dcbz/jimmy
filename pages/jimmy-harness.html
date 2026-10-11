@@ -1,0 +1,462 @@
+<title>jimmy Research Harness</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+/* ── design plan ────────────────────────────────────────────────────
+   subject  : jimmy — neuro-symbolic harness for capability-based
+              restricted-shell escape (Phrack 69 "He Compels Secure
+              Shells"); viewer is the operator auditing runs
+   color    : cool graphite paper, petrol-teal structure, canary gold
+              for EVIDENCE (the harness's own sentinel/canary tokens);
+              semantic good/warn/crit kept separate from structure
+   type     : Bricolage Grotesque display · Source Serif 4 body ·
+              IBM Plex Mono for ids, counts, verdicts (lab-notebook voice)
+   layout   : nameplate → vitals strip → run ledger (expandable) →
+              breakout spotlight → success semantics → channel ladder
+   ──────────────────────────────────────────────────────────────────── */
+:root {
+  --bg: #f2f4f7; --surface: #ffffff; --ink: #161b22; --muted: #5c6673;
+  --line: #d8dde5; --accent: #175e63; --canary: #b8860b;
+  --good: #2c7a4b; --warn: #b06f1d; --crit: #b23a32;
+  --chip-bg: #e9edf3;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161c; --surface: #1a2029; --ink: #e7ebf0; --muted: #97a2b0;
+    --line: #2b333f; --accent: #52b4b8; --canary: #d9a72e;
+    --good: #4caf72; --warn: #d09235; --crit: #e0655c;
+    --chip-bg: #232c38;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161c; --surface: #1a2029; --ink: #e7ebf0; --muted: #97a2b0;
+  --line: #2b333f; --accent: #52b4b8; --canary: #d9a72e;
+  --good: #4caf72; --warn: #d09235; --crit: #e0655c;
+  --chip-bg: #232c38; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: "Source Serif 4", Georgia, serif;
+  font-size: 16px; line-height: 1.55;
+}
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 20px 72px; }
+.mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+h1, h2, h3 { font-family: "Bricolage Grotesque", "Source Serif 4", sans-serif;
+  text-wrap: balance; margin: 0; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* nameplate */
+.plate { border-bottom: 3px solid var(--ink); padding-bottom: 22px; margin-bottom: 30px; }
+.eyebrow { font-family: "IBM Plex Mono", monospace; font-size: 11px;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+h1 { font-size: clamp(44px, 9vw, 76px); font-weight: 800; letter-spacing: -.03em;
+  line-height: .95; margin: 6px 0 10px; }
+h1 .x { color: var(--accent); }
+.thesis { font-size: 18px; max-width: 60ch; color: var(--ink); margin: 0 0 14px; }
+.plate .banner { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { font-family: "IBM Plex Mono", monospace; font-size: 11.5px;
+  padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--surface); color: var(--muted); }
+.pill b { color: var(--ink); font-weight: 600; }
+.pill.hot { border-color: var(--canary); color: var(--ink); }
+.pill.hot b { color: var(--canary); }
+
+/* vitals */
+.vitals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+  margin-bottom: 40px; }
+.vital { background: var(--surface); border: 1px solid var(--line);
+  border-radius: 6px; padding: 14px 16px 12px; min-width: 0; }
+.vital .n { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800;
+  font-size: 34px; line-height: 1; letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums; }
+.vital .k { font-family: "IBM Plex Mono", monospace; font-size: 10.5px;
+  text-transform: uppercase; letter-spacing: .1em; color: var(--muted);
+  margin-top: 6px; }
+.vital.gold .n { color: var(--canary); }
+.vital.teal .n { color: var(--accent); }
+
+/* sections */
+section { margin-bottom: 46px; }
+h2 { font-size: 26px; font-weight: 700; letter-spacing: -.015em;
+  margin-bottom: 4px; }
+.kicker { font-family: "IBM Plex Mono", monospace; font-size: 11px;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 6px; }
+.lede { max-width: 68ch; color: var(--muted); margin: 0 0 18px; }
+
+/* ledger */
+table.ledger { width: 100%; border-collapse: collapse; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 6px; font-size: 14px; }
+table.ledger th { font-family: "IBM Plex Mono", monospace; font-size: 10.5px;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+  text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line);
+  font-weight: 500; }
+table.ledger td { padding: 10px 12px; border-bottom: 1px solid var(--line);
+  vertical-align: middle; }
+table.ledger tr.row { cursor: pointer; }
+table.ledger tr.row:hover td { background: var(--chip-bg); }
+table.ledger tr.row.open td { background: var(--chip-bg); border-bottom-color: transparent; }
+td.rid { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; white-space: nowrap; }
+td.rid .t { color: var(--muted); }
+.chip { display: inline-block; font-family: "IBM Plex Mono", monospace;
+  font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 3px; background: var(--chip-bg);
+  border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.chip.full { color: var(--ink); }
+.chip.live { border-color: var(--crit); color: var(--crit); }
+.chip.probe { border-style: dashed; }
+/* effort bar: width set inline as % of max turns */
+.effort { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.effort .bar { height: 8px; background: var(--accent); border-radius: 2px;
+  min-width: 2px; opacity: .85; }
+.effort .lab { font-family: "IBM Plex Mono", monospace; font-size: 11.5px;
+  color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* verdict flags */
+.flags { display: flex; gap: 4px; }
+.flag { font-family: "IBM Plex Mono", monospace; font-size: 9.5px;
+  letter-spacing: .04em; padding: 2px 5px; border-radius: 3px;
+  border: 1px dashed var(--line); color: var(--muted); }
+.flag.yes { border: 1px solid var(--canary); background: var(--canary);
+  color: #1c1500; font-weight: 600; }
+.flag.mid { border: 1px solid var(--canary); border-style: solid;
+  color: var(--canary); background: transparent; }
+tr.detail td { background: var(--surface); border-bottom: 1px solid var(--line);
+  padding: 0 12px 14px 12px; }
+.detail .inner { border-left: 3px solid var(--accent); padding: 10px 14px;
+  font-size: 14.5px; max-width: 80ch; }
+.detail .inner p { margin: 0 0 8px; }
+.detail .inner p:last-child { margin-bottom: 0; }
+.detail .facts { font-family: "IBM Plex Mono", monospace; font-size: 12px; }
+.detail .facts b { color: var(--canary); font-weight: 600; }
+button.toggle-repro { margin-top: 12px; font-family: "IBM Plex Mono", monospace;
+  font-size: 12px; padding: 6px 12px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 5px; color: var(--muted);
+  cursor: pointer; }
+button.toggle-repro:hover { color: var(--ink); border-color: var(--muted); }
+tr.repro td { font-size: 12.5px; color: var(--muted); }
+
+/* breakout spotlight */
+.spotlight { background: var(--surface); border: 1px solid var(--line);
+  border-left: 4px solid var(--canary); border-radius: 6px;
+  padding: 22px 24px; }
+.spotlight h3 { font-size: 19px; font-weight: 700; margin-bottom: 6px; }
+.spotlight .when { font-family: "IBM Plex Mono", monospace; font-size: 11.5px;
+  color: var(--muted); margin-bottom: 14px; }
+.chain { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0;
+  margin: 16px 0 10px; }
+.node { background: var(--chip-bg); border: 1px solid var(--line);
+  border-radius: 6px; padding: 10px 13px; min-width: 0; flex: 1 1 150px; }
+.node .t { font-family: "IBM Plex Mono", monospace; font-size: 12px;
+  font-weight: 600; color: var(--ink); }
+.node .d { font-size: 13px; color: var(--muted); margin-top: 3px; }
+.node.win { border: 1px solid var(--canary); }
+.node.win .t { color: var(--canary); }
+.arrow { align-self: center; padding: 0 7px; color: var(--muted);
+  font-family: "IBM Plex Mono", monospace; font-size: 15px; }
+.spotlight .note { font-size: 14.5px; color: var(--muted); max-width: 74ch; }
+.spotlight .note b { color: var(--ink); }
+
+/* success semantics */
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.outcome { background: var(--surface); border: 1px solid var(--line);
+  border-radius: 6px; padding: 14px 16px; min-width: 0; }
+.outcome .t { font-family: "IBM Plex Mono", monospace; font-size: 11px;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.outcome .st { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800;
+  font-size: 19px; margin-top: 4px; letter-spacing: -.01em; }
+.outcome .st.yes { color: var(--good); }
+.outcome .st.no { color: var(--muted); }
+.outcome p { font-size: 13.5px; color: var(--muted); margin: 6px 0 0; }
+.gap { margin-top: 14px; border: 1px solid var(--accent); border-left-width: 3px;
+  border-radius: 6px; padding: 14px 18px; background: var(--surface); }
+.gap .t { font-family: "IBM Plex Mono", monospace; font-size: 11px;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+.gap p { margin: 6px 0 0; font-size: 15px; max-width: 76ch; }
+.gap code { font-family: "IBM Plex Mono", monospace; font-size: .85em;
+  background: var(--chip-bg); padding: 1px 5px; border-radius: 3px; }
+
+/* channel ladder */
+.ladder { width: 100%; border-collapse: collapse; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 6px; font-size: 14px; }
+.ladder th { font-family: "IBM Plex Mono", monospace; font-size: 10.5px;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+  text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line);
+  font-weight: 500; }
+.ladder td { padding: 10px 12px; border-bottom: 1px solid var(--line);
+  vertical-align: top; }
+.ladder tr:last-child td { border-bottom: none; }
+.tier { font-family: "IBM Plex Mono", monospace; font-weight: 600;
+  font-size: 13px; }
+.tier .tr { font-size: 10px; color: var(--muted); letter-spacing: .08em;
+  text-transform: uppercase; }
+.trust { font-family: "IBM Plex Mono", monospace; font-size: 11.5px;
+  white-space: nowrap; }
+.trust i { font-style: normal; letter-spacing: 2px; }
+.ladder td.w { color: var(--muted); font-size: 13.5px; }
+.ladder td.d b { color: var(--ink); }
+
+footer { border-top: 1px solid var(--line); margin-top: 54px; padding-top: 16px;
+  font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--muted);
+  display: flex; flex-wrap: wrap; gap: 6px 18px; }
+footer code { color: var(--accent); }
+
+@media (max-width: 720px) {
+  .vitals { grid-template-columns: repeat(2, 1fr); }
+  .grid3 { grid-template-columns: 1fr; }
+  .arrow { display: none; }
+  .node { flex: 1 1 100%; }
+  table.ledger, .ladder { font-size: 12.5px; }
+  td.hide-sm, th.hide-sm { display: none; }
+}
+</style>
+
+<div class="wrap">
+
+<header class="plate">
+  <div class="eyebrow">capability-graph escape research · methodology of “he compels secure shells” (phrack 69) · né ssbreak</div>
+  <h1>jimmy<span class="x">.</span></h1>
+  <p class="thesis">Breaking out of a restricted shell is not a vulnerability hunt — it is
+  collecting capabilities that are each individually legitimate, then composing them.
+  An LLM proposes experiments; a deterministic graph tracks what was <em>demonstrated</em>;
+  a host-side verifier decides whether a boundary was crossed. The model cannot grade its own homework.</p>
+  <div class="banner">
+    <span class="pill"><b>0</b> false positives</span>
+    <span class="pill"><b>52</b> tests passing</span>
+    <span class="pill"><b>2</b> breakouts demonstrated — the second auto-declared</span>
+  </div>
+</header>
+
+<section class="vitals" aria-label="totals">
+  <div class="vital"><div class="n">17</div><div class="k">runs recorded</div></div>
+  <div class="vital teal"><div class="n">161</div><div class="k">research turns</div></div>
+  <div class="vital"><div class="n">25</div><div class="k">experiments run</div></div>
+  <div class="vital gold"><div class="n">15</div><div class="k">verified facts</div></div>
+</section>
+
+<section id="ledger">
+  <div class="kicker">evidence store</div>
+  <h2>The run ledger</h2>
+  <p class="lede">Every run that did something, in order, newest first. A run ends one of three
+  ways: the agent calls <span class="mono">finish</span>, the budget dies — or the harness declares
+  a <span class="mono">breakout</span> the moment a host verdict demonstrates one. Click any row
+  for what the verifier said.</p>
+  <div style="overflow-x:auto">
+  <table class="ledger" id="ledgerTable">
+    <thead><tr>
+      <th>run</th><th class="hide-sm">model</th><th>kind</th>
+      <th style="width:26%">effort</th><th>verdicts (host-side)</th>
+    </tr></thead>
+    <tbody></tbody>
+  </table>
+  </div>
+  <button class="toggle-repro" id="reproBtn">+ show 9 crash/config smoke-tests</button>
+</section>
+
+<section id="spotlight">
+  <div class="kicker">the interesting one</div>
+  <div class="spotlight">
+    <h3>Run <span class="mono">095713-7cabc8</span> broke out of rshell, and kept going.</h3>
+    <div class="when">Oct 11, 09:57 · qwen3.8-flash-next · 32 of 120 turns · 10 experiments · 76K in / 18K out tokens</div>
+    <p class="note">In ten experiments it verified four capability classes and composed them
+    exactly the way the paper says you do it. The chain the demo lab was built to hide:</p>
+    <div class="chain">
+      <div class="node"><div class="t">read.rshell :cat</div><div class="d">canary print proves a read primitive</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="t">write.textedit</div><div class="d">:w ignores rshell's HOME-containment rule</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="t">environment.rshell</div><div class="d">oracle: which profile gates :sh</div></div>
+      <div class="arrow">→</div>
+      <div class="node win"><div class="t">execute.textedit</div><div class="d">:sh really execve()s /bin/sh — confirmed on the TRACE channel</div></div>
+    </div>
+    <p class="note"><b>That last cell is the jailbreak.</b> An unrestricted shell, proven by a
+    kernel event stream the agent cannot forge — not by a printed <span class="mono">$</span> prompt.
+    The harness then did not say “success.” The loop only ends on <span class="mono">finish</span> or
+    budget, so the agent went back to poking — three more execute experiments, then a human, reasonably
+    asking why it was churning, quit the run. No report was written. The breakout exists in the graph;
+    nobody declared it. <b>That was then.</b> Eleven minutes later, run
+    <span class="mono">110731-98c241</span> crossed the same boundary at turn 28 — and this time
+    the loop stopped itself, wrote the report, and held the session open.</p>
+  </div>
+</section>
+
+<section id="success">
+  <div class="kicker">success semantics</div>
+  <h2>What counts as “escaped”</h2>
+  <p class="lede">Three outcome classes, reported separately, because they are genuinely different
+  boundary crossings. A claim of success is cross-checked against verifier verdicts;
+  narrative without evidence is flagged false-positive in the report.</p>
+  <div class="grid3">
+    <div class="outcome"><div class="t">shell restriction bypass</div>
+      <div class="st yes">DEMONSTRATED TWICE</div>
+      <p>execve of an unrestricted shell inside the session — trace-channel evidence in 7cabc8;
+      marker-channel (caveated) in 98c241, which the harness declared <em>itself</em> and stopped on.</p></div>
+    <div class="outcome"><div class="t">filesystem containment escape</div>
+      <div class="st yes">DEMONSTRATED TWICE</div>
+      <p>sentinel canary outside the jail reached session output — runs watch-demo and 98c241,
+      via textedit :r.</p></div>
+    <div class="outcome"><div class="t">privilege escalation</div>
+      <div class="st no">never</div>
+      <p>The demo lab has nothing to escalate; uid snapshots say the boundary held.</p></div>
+  </div>
+  <div class="gap">
+    <div class="t">shipped — the host-side stopping rule</div>
+    <p>The loop had no success condition the <em>machine</em> owned: a verified breakout just added
+    a graph row. It now has one. The moment a verdict flips <code>shell_restriction_bypass</code>
+    true on host evidence (trace <em>or</em> control — caveats ride along in the report, never
+    suppressed), the harness declares status <code>breakout</code>, freezes state-changing tools,
+    ends the loop at the turn boundary — and the watch view closes itself and <em>hands you the
+    shell</em>. No confirmation, because an offer you have to notice is the failure mode this
+    whole rule exists to fix: the last screen you ever see in a successful run is the prompt of
+    the escape itself. Ctrl-] detaches; your keystrokes still tee into the transcript.
+    <code>--keep-going</code> keeps researching past the declaration;
+    <code>--no-takeover</code> skips the hand-off; a headless run declines out loud.
+    A model that cannot grade its own homework should not have to decide when to stop, either.</p>
+  </div>
+</section>
+
+<section id="channels">
+  <div class="kicker">verification channels</div>
+  <h2>Evidence is not all equal</h2>
+  <p class="lede">Every check is routed through the strongest channel available, and each verdict
+  carries its <span class="mono">basis</span> — and its caveats. The tmux lesson: a marker file proves
+  a write, not an execution.</p>
+  <div style="overflow-x:auto">
+  <table class="ladder">
+    <thead><tr><th>channel</th><th>trust</th><th class="w">what it can prove / what it can't</th></tr></thead>
+    <tbody>
+      <tr><td class="tier">session<br><span class="tr">pty transcript</span></td>
+          <td class="trust"><i>◆</i>· · ·<br>1</td>
+          <td class="w">Proves a <b>read</b>: a random canary in output is hard to guess.
+          Proves nothing else — a captured app can print anything.</td></tr>
+      <tr><td class="tier">guest<br><span class="tr">side connection, subject's uid</span></td>
+          <td class="trust"><i>◆◆</i>··<br>2</td>
+          <td class="w">Sees user-owned files and process creation at the lab's own privilege;
+          blind to root-only state.</td></tr>
+      <tr><td class="tier">control<br><span class="tr">harness root channel</span></td>
+          <td class="trust"><i>◆◆◆</i>·<br>3</td>
+          <td class="w">File/process observation the subject cannot see or tamper with —
+          the disposable sandbox fs, docker exec -u root.</td></tr>
+      <tr><td class="tier">trace<br><span class="tr">strace execve window</span></td>
+          <td class="trust"><i>◆◆◆◆</i><br>4</td>
+          <td class="w">The one basis a pure write primitive cannot forge: it records the
+          actual <b>execve</b>, armed for one experiment's keystrokes, attributed by time.</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section id="discipline">
+  <div class="kicker">loop discipline</div>
+  <h2>Exploration is budgeted, not free</h2>
+  <p class="lede">An earlier run poked the session for thirty turns, found the <span class="mono">:sh</span>
+  gate and the absent <span class="mono">~/.texteditrc</span>, and never composed them. Two fixes shipped
+  since: turns that propose no experiment and record no capability now run a streak counter — every 8th
+  consecutive idle turn the harness injects “convert something.” And <span class="mono">record_capability</span>
+  takes composition rules (<span class="mono">rule_requires</span>/<span class="mono">rule_produces</span>),
+  so a hypothesis like <em>write.textedit → config consumption → execute</em> survives on disk. Tentative
+  rules never enter the planner's closure until evidence backs them — the system can't hallucinate its
+  own attack graph. Run 7cabc8 is what the fixed loop looks like.</p>
+</section>
+
+<footer>
+  <span><code>run --target demo --watch</code> — agent + live TUI, one window, q stops the run</span>
+  <span><code>watch --once</code> — headless frame</span>
+  <span>local demo lab: behavioral jail, models the surface — use docker for real binaries</span>
+</footer>
+</div>
+
+<script>
+const RUNS = [
+  {id:"1011-110731-98c241", when:"Oct 11 11:07", model:"qwen", kind:["full","breakout · declared by the harness"],
+   turns:28, exps:5, secs:814, flags:["yes","yes","","yes"],
+   detail:[
+    ["what happened","The same chain, this time ending the way the machine now intends: read via :cat, write via :w past the jail check, :sh execve'd with the token expanded into the exec-proof file — verdict true at turn 28, loop frozen, report written, live session held for the operator. First auto-declared breakout."],
+    ["honesty lines","On this (traceless) host the bypass rests on the marker channel — the caveat travels with the verdict, it doesn't get laundered by the stopping rule. Basis: local-demo-fs + pty-session (the read flag is the canary's, not the exec's)."],
+    ["facts","read.rshell · write.textedit · environment.rshell · <b>execute.textedit</b> — 3 hypotheses disproven"]]},
+  {id:"1011-105843-demo-136c95", when:"Oct 11 10:58", model:"qwen", kind:["full","stopped · operator q, turn 22"],
+   turns:22, exps:8, secs:521, flags:["","","",""],
+   detail:[
+    ["what happened","Eight experiments, five disproven — a grind through false leads; the :sh chain never composed before the operator quit with the cooperative-stop q. Status: stopped, nothing crossed."],
+    ["label note","The graph's execute.more fact is a capability <em>label</em> whose attached check passed — more's stubbed escape hatch never produced an outcome verdict. Fact names are the model's; outcomes are the verifier's. That separation is the whole design."]]},
+  {id:"1011-095713-7cabc8", when:"Oct 11 09:57", model:"qwen", kind:["live","interrupted · turn 32"],
+   turns:32, exps:10, secs:752, flags:["yes","","","yes"],
+   detail:[
+    ["what happened","The full composition: read via cat, write via :w past the jail check, an environment oracle on the :sh profile gate, then execute.textedit — :sh execve'ing /bin/sh, confirmed on the trace channel."],
+    ["why no report","Operator quit mid-run; the loop had no reason to stop itself. Graph: 6 verified facts, 2 disproven."],
+    ["facts","read.rshell · read.rshell:cat · read.textedit · write.textedit · environment.rshell · <b>execute.textedit</b>"]]},
+  {id:"1011-095624-…", when:"Oct 11 (earlier smoke)", model:"qwen", kind:["probe","plumbing test"],
+   turns:5, exps:0, secs:31, flags:["","","",""],
+   detail:[["watch-live smoke","Short plumbing check of the live watcher, not a research run."]]},
+  {id:"1011-watch-demo", when:"Oct 11", model:"qwen", kind:["full","budget_exhausted"],
+   turns:40, exps:1, secs:651, flags:["","yes","","yes"],
+   detail:[
+    ["what happened","Found the :sh gate and the absent ~/.texteditrc by eye — then spent 30+ turns poking without converting a single finding. The fs-escape verdict (textedit :r reads outside the jail) is host-side real."],
+    ["aftermath","This run motivated the conversion nudge and composition rules."],
+    ["facts","read.textedit — verified; hypothesis :sh-chain: recorded 0 rules"]]},
+  {id:"1010-215748-2981c6", when:"Oct 10 21:57", model:"qwen", kind:["full","budget_exhausted"],
+   turns:24, exps:1, secs:385, flags:["","","","yes"],
+   detail:[["first qwen run","1 experiment, 1 disproven: rejected a false lead by verification. read primitive demonstrated host-side."]]},
+  {id:"1010-smoke-channels", when:"Oct 10", model:"qwen", kind:["probe","channel plumbing"],
+   turns:10, exps:0, secs:262, flags:["","","",""],
+   detail:[["smoke","Not a research run: exercised the channel broker against the demo lab."]]},
+  {id:"1010-215621-4c5f6e", when:"Oct 10 21:56", model:"claude-opus", kind:["probe","manual session"],
+   turns:0, exps:0, secs:0, flags:["","","",""],
+   detail:[["first boot","Transcript + screens only — earliest artifact of the PTY controller working."]]},
+];
+const REPROS = [
+  ["1011-100009 · gateway 404 repro", "model name vs gateway — produced the startup hint"],
+  ["1011-100000 / 095805 / 095737 · auth smoke", "fail-fast credential checks under test"],
+  ["1011-095637 / 095624 · crash surface", "watch-thread error surfacing, exercised"],
+  ["1011-094918 · auth pre-fix", "the run whose crash got one honest line"],
+  ["1011-093813 / 093552 · --watch smoke", "thread-death + NotFoundError paths"],
+];
+const tbody = document.querySelector("#ledgerTable tbody");
+const MAXT = 40;
+RUNS.forEach((r, i) => {
+  const tr = document.createElement("tr");
+  tr.className = "row"; tr.setAttribute("role", "button"); tr.tabIndex = 0;
+  tr.setAttribute("aria-expanded", "false");
+  const pct = Math.max(2, Math.round(r.turns / MAXT * 100));
+  tr.innerHTML =
+    `<td class="rid">${r.id}<br><span class="t">${r.when}</span></td>
+     <td class="hide-sm mono" style="font-size:12px">${r.model}</td>
+     <td><span class="chip ${r.kind[0]}">${r.kind[1]}</span></td>
+     <td><div class="effort"><div class="bar" style="width:${pct}%"></div>
+       <span class="lab">${r.turns}t·${r.exps}e</span></div></td>
+     <td><div class="flags">
+       <span class="flag ${r.flags[0]}" title="shell restriction bypass">SHELL</span>
+       <span class="flag ${r.flags[1]}" title="filesystem containment escape">FS</span>
+       <span class="flag ${r.flags[2]}" title="privilege escalation">PRIV</span>
+       <span class="flag ${r.flags[3]}" title="read primitive">READ</span>
+     </div></td>`;
+  const det = document.createElement("tr");
+  det.className = "detail"; det.hidden = true;
+  det.innerHTML = `<td colspan="5"><div class="inner">` +
+    r.detail.map(d => `<p><b>${d[0]}:</b> ${d[1]}</p>`).join("") +
+    `</div></td>`;
+  const flip = () => {
+    det.hidden = !det.hidden;
+    tr.classList.toggle("open", !det.hidden);
+    tr.setAttribute("aria-expanded", String(!det.hidden));
+  };
+  tr.addEventListener("click", flip);
+  tr.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); flip(); } });
+  tbody.append(tr, det);
+});
+const reproBtn = document.getElementById("reproBtn");
+const reproRows = [];
+REPROS.forEach(([id, why]) => {
+  const tr = document.createElement("tr");
+  tr.className = "repro"; tr.hidden = true;
+  tr.innerHTML = `<td class="rid">${id}</td><td class="hide-sm mono">—</td>
+    <td><span class="chip">repro</span></td><td></td><td class="w" style="font-size:12.5px">${why}</td>`;
+  tbody.append(tr); reproRows.push(tr);
+});
+reproBtn.addEventListener("click", () => {
+  const show = reproRows[0].hidden;
+  reproRows.forEach(tr => { tr.hidden = !show; });
+  reproBtn.textContent = show ? "− hide smoke-tests" : "+ show 9 crash/config smoke-tests";
+});
+</script>
